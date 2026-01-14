@@ -1,8 +1,11 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useRef } from 'react';
 import { Invoice, Section, Category, Feature, ExportFormat, PresentationStyle } from '@/types/project';
 import { calculateTotals } from '@/utils/project-templates';
 import { exportAsPrintableHTML, generateContractHTML, generateHTMLExport } from '@/utils/export-helpers';
 import { ExportDialog } from '@/app/components/export-dialog';
+import { PDFInvoiceGenerator } from '@/app/components/export-pdf';
+
+import { useReactToPrint } from 'react-to-print';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
@@ -171,10 +174,19 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
     link.click();
     toast.success('JSON exported successfully');
   };
+  // Export as pdf
+  const [showPDFGenerator, setShowPDFGenerator] = useState(false);
+
 
   // Calculate estimated duration
   const estimatedWeeks = Math.ceil(totals.selectedHours / 40);
   const estimatedMonths = Math.ceil(estimatedWeeks / 4);
+
+  // Print functionality
+  const componentRef = useRef(null);
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+  });
 
   return (
     <div className="grid lg:grid-cols-[1fr_350px] gap-6">
@@ -407,10 +419,11 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
             <Button
               className="w-full justify-start"
               variant="outline"
-              disabled
+              onClick={() => setShowPDFGenerator(true)}
+
             >
               <FileText className="h-4 w-4 mr-2" />
-              Export as PDF (Coming Soon)
+              Export as PDF 
             </Button>
 
             <Separator className="my-4" />
@@ -422,6 +435,12 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
             >
               Start New Project
             </Button>
+            {showPDFGenerator && (
+  <PDFInvoiceGenerator 
+    invoice={invoice} 
+    onClose={() => setShowPDFGenerator(false)} 
+  />
+)}
           </div>
         </Card>
       </div>
