@@ -1,3 +1,27 @@
 @import './fonts.css';
 @import './tailwind.css';
 @import './theme.css';
+
+.pdf-root,
+.pdf-root * {
+    color: rgb(0, 0, 0) !important;
+    background-color: rgb(255, 255, 255) !important;
+    border-color: rgb(0, 0, 0) !important;
+}
+.pdf-muted {
+    color: rgb(102, 102, 102) !important;
+}
+
+.pdf-root * {
+    line-height: 2 !important;
+    /* make text more readable */
+    word-break: break-word;
+    /* avoid overflow issues */
+}
+
+/* .pdf-root p,
+.pdf-root td,
+.pdf-root th {
+    padding: 6px 8px;
+    margin-bottom: 6px;
+} */

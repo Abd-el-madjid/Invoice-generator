@@ -1,5 +1,7 @@
 import React, { useRef, useState, useEffect } from 'react';
 import { useReactToPrint } from 'react-to-print';
+import { jsPDF } from 'jspdf';
+import html2canvas from 'html2canvas';
 import { Invoice } from '@/types/project';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from '@/app/components/ui/dialog';
 import { Button } from '@/app/components/ui/button';
@@ -16,7 +18,10 @@ interface PDFInvoiceGeneratorProps {
 }
 
 export const PDFInvoiceGenerator: React.FC<PDFInvoiceGeneratorProps> = ({ invoice, onClose }) => {
-  const printRef = useRef<HTMLDivElement>(null);
+  // const printRef = useRef<HTMLDivElement>(null);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isGenerating, setIsGenerating] = useState(false);
+
   const [formData, setFormData] = useState({
     // Company info
     companyName: invoice.metadata.companyName || '',
@@ -69,20 +74,85 @@ export const PDFInvoiceGenerator: React.FC<PDFInvoiceGeneratorProps> = ({ invoic
     toast.success('Signature removed');
   };
 
-  const handlePrint = useReactToPrint({
-    contentRef: printRef,
-    documentTitle: `Invoice_${invoice.metadata.projectName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`,
-  });
+  // const handlePrint = useReactToPrint({
+  //   contentRef: printRef,
+  //   documentTitle: `Invoice_${invoice.metadata.projectName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}`,
+  // });
 
-  const handleGeneratePDF = () => {
-    setShowForm(false);
-    setTimeout(() => {
-      handlePrint();
-      setTimeout(() => {
-        setShowForm(true);
-      }, 500);
-    }, 100);
+  const generatePDF = async () => {
+  
+    if (!formData.companyName || !formData.companyEmail) {
+      toast.error('Please fill in required company information (Name and Email)');
+      return;
+    }
+
+    setIsGenerating(true);
+    toast.info('Generating PDF...');
+
+    try {
+      // Wait for DOM to update
+      await new Promise(resolve => setTimeout(resolve, 200));
+
+      const element = contentRef.current;
+      if (!element) {
+        throw new Error('Content element not found');
+      }
+      
+      // Generate canvas from HTML
+      const canvas = await html2canvas(element, {
+        scale: 2,
+        useCORS: true,
+        logging: false,
+        backgroundColor: '#ffffff',
+        windowWidth: 794, // A4 width in pixels at 96 DPI
+        windowHeight: 1123 // A4 height in pixels at 96 DPI
+      });
+
+      // Calculate PDF dimensions
+      const imgWidth = 210; // A4 width in mm
+      const pageHeight = 297; // A4 height in mm
+      const imgHeight = (canvas.height * imgWidth) / canvas.width;
+      
+      // Create PDF
+      const pdf = new jsPDF('p', 'mm', 'a4');
+      let heightLeft = imgHeight;
+      let position = 0;
+
+      // Add first page
+      pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+      heightLeft -= pageHeight;
+
+      // Add additional pages if needed
+      while (heightLeft > 0) {
+        position = heightLeft - imgHeight;
+        pdf.addPage();
+        pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, position, imgWidth, imgHeight);
+        heightLeft -= pageHeight;
+      }
+
+      // Save PDF
+      const fileName = `Invoice_${invoice.metadata.projectName.replace(/\s+/g, '_')}_${new Date().toISOString().split('T')[0]}.pdf`;
+      pdf.save(fileName);
+
+      toast.success('PDF generated successfully!');
+    } catch (error) {
+      console.error('Error generating PDF:', error);
+      
+      toast.error('Failed to generate PDF. Please try again.');
+    } finally {
+      setIsGenerating(false);
+    }
   };
+
+  // const handleGeneratePDF = () => {
+  //   setShowForm(false);
+  //   setTimeout(() => {
+  //     handlePrint();
+  //     setTimeout(() => {
+  //       setShowForm(true);
+  //     }, 500);
+  //   }, 100);
+  // };
 
   const getSelectedItems = () => {
     const items: Array<{
@@ -322,9 +392,9 @@ export const PDFInvoiceGenerator: React.FC<PDFInvoiceGeneratorProps> = ({ invoic
             <Button variant="outline" onClick={onClose}>
               Cancel
             </Button>
-            <Button onClick={handleGeneratePDF} className="gap-2">
+            <Button onClick={generatePDF} disabled={isGenerating} className="gap-2">
               <Printer className="h-4 w-4" />
-              Generate PDF
+               {isGenerating ? 'Generating...' : 'Generate PDF'}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -332,7 +402,7 @@ export const PDFInvoiceGenerator: React.FC<PDFInvoiceGeneratorProps> = ({ invoic
 
       {/* Hidden PDF Content */}
       <div style={{ position: 'absolute', left: '-9999px', top: 0 }}>
-        <div ref={printRef}>
+        <div ref={contentRef} className='pdf-root'>
           <div className="p-8 bg-white text-black" style={{ fontFamily: 'Arial, sans-serif', fontSize: '11pt' }}>
             {/* Header */}
             <div className="mb-8 pb-4 border-b-2 border-black">
@@ -575,6 +645,7 @@ export const PDFInvoiceGenerator: React.FC<PDFInvoiceGeneratorProps> = ({ invoic
 
       <style >{`
         @media print {
+          
           body { 
             print-color-adjust: exact; 
             -webkit-print-color-adjust: exact; 
