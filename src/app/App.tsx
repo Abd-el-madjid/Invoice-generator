@@ -1,6 +1,4 @@
-import { useState } from 'react';
-import { motion } from 'motion/react';
-
+import { useState, useEffect } from 'react';
 import { Invoice } from '@/types/project';
 import { WorkflowSelection } from '@/app/components/workflow-selection';
 import { ProjectCreator } from '@/app/components/project-creator';
@@ -12,9 +10,36 @@ import Logo from '@/app/assets/logo.webp';
 
 type WorkflowMode = 'selection' | 'create' | 'rebuild' | 'editing';
 
+const STORAGE_KEY = 'smart-project-builder-state';
+
 export default function App() {
   const [mode, setMode] = useState<WorkflowMode>('selection');
   const [currentInvoice, setCurrentInvoice] = useState<Invoice | null>(null);
+
+  // Load state from localStorage on mount
+  useEffect(() => {
+    const savedState = localStorage.getItem(STORAGE_KEY);
+    if (savedState) {
+      try {
+        const { mode: savedMode, invoice } = JSON.parse(savedState);
+        if (savedMode && invoice) {
+          setMode(savedMode);
+          setCurrentInvoice(invoice);
+        }
+      } catch (error) {
+        console.error('Failed to load saved state:', error);
+      }
+    }
+  }, []);
+
+  // Save state to localStorage whenever it changes
+  useEffect(() => {
+    if (currentInvoice) {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ mode, invoice: currentInvoice }));
+    } else if (mode === 'selection') {
+      localStorage.removeItem(STORAGE_KEY);
+    }
+  }, [mode, currentInvoice]);
 
   const handleWorkflowSelect = (workflow: 'create' | 'rebuild') => {
     setMode(workflow);
@@ -48,15 +73,9 @@ export default function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10  rounded-lg flex items-center justify-center">
-           <motion.button
-  onClick={handleBackToSelection}
-  whileHover={{ scale: 1.1 }}
-  whileTap={{ scale: 0.95 }}
-  className="flex items-center"
->
-  <img src={Logo} alt="Logo" className="h-10 w-auto" />
-</motion.button>
-
+                <img src={Logo}
+                  alt="Logo"
+                  className="h-10 w-8 text-white" />
               </div>
               <div>
                 <h1 className="font-bold text-slate-900">Smart Project Builder</h1>
@@ -109,10 +128,10 @@ export default function App() {
       <footer className="mt-16 border-t border-slate-200 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <div className="flex items-center justify-between text-sm text-slate-500">
-            <p>© 2026 K-Abd El Madjid - Built with intention, designed with purpose. -  Document Generation</p>
+            <p>© 2026  K-Abd El Madjid - Built with intention, designed with purpose.</p>
             <div className="flex items-center gap-2">
               <FileText className="h-4 w-4" />
-              <span>Session-only • No data stored</span>
+              <span>Auto-saved • Data persists in browser</span>
             </div>
           </div>
         </div>

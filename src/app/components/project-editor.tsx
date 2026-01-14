@@ -5,6 +5,7 @@ import { exportAsPrintableHTML, generateContractHTML, generateHTMLExport } from 
 import { ExportDialog } from '@/app/components/export-dialog';
 import { PDFInvoiceGenerator } from '@/app/components/export-pdf';
 
+import { useReactToPrint } from 'react-to-print';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
@@ -183,157 +184,13 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
 
   // Print functionality
   const componentRef = useRef(null);
-  // Dynamically import react-to-print only in browser
-  const handlePrint = useMemo(() => {
-    if (typeof window === 'undefined') return () => {}; // SSR guard
-    const { useReactToPrint } = require('react-to-print');
-    return useReactToPrint({
-      content: () => componentRef.current,
-    });
-  }, []);
+  const handlePrint = useReactToPrint({
+    content: () => componentRef.current,
+  });
 
   return (
-    <div className="grid lg:grid-cols-[1fr_350px] gap-6">
-      {/* Main Editor */}
-      <div className="space-y-6">
-        {/* Metadata Card */}
-        <Card className="p-6">
-          <div className="flex items-start justify-between mb-4">
-            <div className="flex-1">
-              <h2 className="text-2xl font-bold text-slate-900 mb-1">
-                {invoice.metadata.projectName}
-              </h2>
-              {invoice.metadata.clientName && (
-                <p className="text-slate-600">Client: {invoice.metadata.clientName}</p>
-              )}
-              <p className="text-sm text-slate-500 mt-1">
-                Created: {invoice.metadata.createdAt}
-                {invoice.metadata.validUntil && ` • Valid until: ${invoice.metadata.validUntil}`}
-              </p>
-            </div>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setEditingMetadata(!editingMetadata)}
-            >
-              <Edit2 className="h-4 w-4 mr-2" />
-              Edit Details
-            </Button>
-          </div>
-
-          {editingMetadata && (
-            <div className="space-y-3 pt-4 border-t">
-              <div>
-                <Label>Project Name</Label>
-                <Input
-                  value={invoice.metadata.projectName}
-                  onChange={(e) =>
-                    onInvoiceChange({
-                      ...invoice,
-                      metadata: { ...invoice.metadata, projectName: e.target.value },
-                    })
-                  }
-                />
-              </div>
-              <div>
-                <Label>Client Name</Label>
-                <Input
-                  value={invoice.metadata.clientName || ''}
-                  onChange={(e) =>
-                    onInvoiceChange({
-                      ...invoice,
-                      metadata: { ...invoice.metadata, clientName: e.target.value },
-                    })
-                  }
-                />
-              </div>
-            </div>
-          )}
-        </Card>
-
-        {/* Sections */}
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <h3 className="text-lg font-semibold text-slate-900">Project Sections</h3>
-            <Button
-              size="sm"
-              onClick={() => setAddingSectionDialog(true)}
-              className="bg-blue-600 hover:bg-blue-700"
-            >
-              <Plus className="h-4 w-4 mr-2" />
-              Add Section
-            </Button>
-          </div>
-
-          <Accordion type="multiple" className="space-y-3">
-            {invoice.sections.map((section, sectionIdx) => (
-              <AccordionItem
-                key={sectionIdx}
-                value={`section-${sectionIdx}`}
-                className="border rounded-lg bg-white"
-              >
-                <AccordionTrigger className="px-4 hover:no-underline">
-                  <div className="flex items-center justify-between w-full pr-4">
-                    <span className="font-semibold text-slate-900">{section.title}</span>
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs text-slate-500">
-                        {section.categories.reduce((acc, cat) => acc + cat.features.length, 0)} features
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          deleteSection(sectionIdx);
-                        }}
-                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent className="px-4 pb-4">
-                  <div className="space-y-4">
-                    {section.categories.map((category, categoryIdx) => (
-                      <div key={categoryIdx} className="space-y-3">
-                        <div className="flex items-center justify-between">
-                          <h4 className="font-medium text-slate-900">{category.name}</h4>
-                          <Button
-                            size="sm"
-                            variant="outline"
-                            onClick={() => setAddingFeatureDialog({ sectionIdx, categoryIdx })}
-                          >
-                            <Plus className="h-3 w-3 mr-1" />
-                            Add Feature
-                          </Button>
-                        </div>
-
-                        <div className="space-y-2">
-                          {category.features.map((feature, featureIdx) => (
-                            <FeatureCard
-                              key={featureIdx}
-                              feature={feature}
-                              onToggle={() => toggleFeature(sectionIdx, categoryIdx, featureIdx)}
-                              onUpdate={(updates) =>
-                                updateFeature(sectionIdx, categoryIdx, featureIdx, updates)
-                              }
-                              onDelete={() => deleteFeature(sectionIdx, categoryIdx, featureIdx)}
-                              currency={invoice.metadata.currency}
-                            />
-                          ))}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
-            ))}
-          </Accordion>
-        </div>
-      </div>
-
-      {/* Sidebar - Totals & Actions */}
+    <div className="grid lg:grid-cols-[350px_1fr] gap-6">
+            {/* Sidebar - Totals & Actions */}
       <div className="space-y-4 lg:sticky lg:top-4 lg:self-start">
         {/* Totals Card */}
         <Card className="p-6">
@@ -440,14 +297,263 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
               Start New Project
             </Button>
             {showPDFGenerator && (
-  <PDFInvoiceGenerator 
-    invoice={invoice} 
-    onClose={() => setShowPDFGenerator(false)} 
-  />
-)}
+              <PDFInvoiceGenerator 
+                invoice={invoice} 
+                onClose={() => setShowPDFGenerator(false)} 
+              />
+            )}
           </div>
         </Card>
       </div>
+
+      {/* Main Editor */}
+      <div className="space-y-6">
+        {/* Metadata Card */}
+        <Card className="p-6">
+          <div className="flex items-start justify-between mb-4">
+            <div className="flex-1">
+              <h2 className="text-2xl font-bold text-slate-900 mb-1">
+                {invoice.metadata.projectName}
+              </h2>
+              {invoice.metadata.clientName && (
+                <p className="text-slate-600">Client: {invoice.metadata.clientName}</p>
+              )}
+              <p className="text-sm text-slate-500 mt-1">
+                Created: {invoice.metadata.createdAt}
+                {invoice.metadata.validUntil && ` • Valid until: ${invoice.metadata.validUntil}`}
+              </p>
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => setEditingMetadata(!editingMetadata)}
+            >
+              <Edit2 className="h-4 w-4 mr-2" />
+              Edit Details
+            </Button>
+          </div>
+
+          {editingMetadata && (
+            <div className="space-y-3 pt-4 border-t">
+              <div>
+                <Label className='py-2'>Project Name</Label>
+                <Input
+                  value={invoice.metadata.projectName}
+                  onChange={(e) =>
+                    onInvoiceChange({
+                      ...invoice,
+                      metadata: { ...invoice.metadata, projectName: e.target.value },
+                    })
+                  }
+                />
+              </div>
+              
+              <Separator className="my-4" />
+              <h4 className="font-medium text-sm">Client Information</h4>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className='py-2'>Client Name</Label>
+                  <Input
+                    value={invoice.metadata.clientName || ''}
+                    onChange={(e) =>
+                      onInvoiceChange({
+                        ...invoice,
+                        metadata: { ...invoice.metadata, clientName: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className='py-2'>Client Email</Label>
+                  <Input
+                    type="email"
+                    value={invoice.metadata.clientEmail || ''}
+                    onChange={(e) =>
+                      onInvoiceChange({
+                        ...invoice,
+                        metadata: { ...invoice.metadata, clientEmail: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className='py-2'>Client Phone</Label>
+                  <Input
+                    type="tel"
+                    value={invoice.metadata.clientPhone || ''}
+                    onChange={(e) =>
+                      onInvoiceChange({
+                        ...invoice,
+                        metadata: { ...invoice.metadata, clientPhone: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className='py-2'>Client Address</Label>
+                  <Input
+                    value={invoice.metadata.clientAddress || ''}
+                    onChange={(e) =>
+                      onInvoiceChange({
+                        ...invoice,
+                        metadata: { ...invoice.metadata, clientAddress: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+
+              <Separator className="my-4" />
+              <h4 className="font-medium text-sm">Company Information</h4>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className='py-2'>Company Name</Label>
+                  <Input
+                    value={invoice.metadata.companyName || ''}
+                    onChange={(e) =>
+                      onInvoiceChange({
+                        ...invoice,
+                        metadata: { ...invoice.metadata, companyName: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  <Label className='py-2'>Company Email</Label>
+                  <Input
+                    type="email"
+                    value={invoice.metadata.companyEmail || ''}
+                    onChange={(e) =>
+                      onInvoiceChange({
+                        ...invoice,
+                        metadata: { ...invoice.metadata, companyEmail: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+              </div>
+              
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label className='py-2'>Company Phone</Label>
+                  <Input
+                    type="tel"
+                    value={invoice.metadata.companyPhone || ''}
+                    onChange={(e) =>
+                      onInvoiceChange({
+                        ...invoice,
+                        metadata: { ...invoice.metadata, companyPhone: e.target.value },
+                      })
+                    }
+                  />
+                </div>
+                <div>
+                  
+                  <Label className='py-2'>Company Address</Label>
+                  <Input
+                    value={invoice.metadata.companyAddress || ''}
+                    onChange={(e) =>
+                      onInvoiceChange({
+                        ...invoice,
+                        metadata: { ...invoice.metadata, companyAddress: e.target.value },
+                      })
+                    }
+                    // rows={2}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
+        </Card>
+
+        {/* Sections */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h3 className="text-lg font-semibold text-slate-900">Project Sections</h3>
+            <Button
+              size="sm"
+              onClick={() => setAddingSectionDialog(true)}
+              className="bg-blue-600 hover:bg-blue-700"
+            >
+              <Plus className="h-4 w-4 mr-2" />
+              Add Section
+            </Button>
+          </div>
+
+          <Accordion type="multiple" className="space-y-3">
+            {invoice.sections.map((section, sectionIdx) => (
+              <AccordionItem
+                key={sectionIdx}
+                value={`section-${sectionIdx}`}
+                className="border rounded-lg bg-white"
+              >
+                <AccordionTrigger className="px-4 hover:no-underline">
+                  <div className="flex items-center justify-between w-full pr-4">
+                    <span className="font-semibold text-slate-900">{section.title}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs text-slate-500">
+                        {section.categories.reduce((acc, cat) => acc + cat.features.length, 0)} features
+                      </span>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteSection(sectionIdx);
+                        }}
+                        className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:bg-red-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  </div>
+                </AccordionTrigger>
+                <AccordionContent className="px-4 pb-4">
+                  <div className="space-y-4">
+                    {section.categories.map((category, categoryIdx) => (
+                      <div key={categoryIdx} className="space-y-3">
+                        <div className="flex items-center justify-between">
+                          <h4 className="font-medium text-slate-900">{category.name}</h4>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setAddingFeatureDialog({ sectionIdx, categoryIdx })}
+                          >
+                            <Plus className="h-3 w-3 mr-1" />
+                            Add Feature
+                          </Button>
+                        </div>
+
+                        <div className="space-y-2">
+                          {category.features.map((feature, featureIdx) => (
+                            <FeatureCard
+                              key={featureIdx}
+                              feature={feature}
+                              onToggle={() => toggleFeature(sectionIdx, categoryIdx, featureIdx)}
+                              onUpdate={(updates) =>
+                                updateFeature(sectionIdx, categoryIdx, featureIdx, updates)
+                              }
+                              onDelete={() => deleteFeature(sectionIdx, categoryIdx, featureIdx)}
+                              currency={invoice.metadata.currency}
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </AccordionContent>
+              </AccordionItem>
+            ))}
+          </Accordion>
+        </div>
+      </div>
+
+
 
       {/* Add Section Dialog */}
       <Dialog open={addingSectionDialog} onOpenChange={setAddingSectionDialog}>
@@ -460,7 +566,7 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label>Section Title</Label>
+              <Label className='py-2'>Section Title</Label>
               <Input
                 placeholder="e.g., CUSTOM INTEGRATIONS"
                 value={newSectionTitle}
@@ -468,7 +574,7 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
               />
             </div>
             <div>
-              <Label>First Category Name</Label>
+              <Label className='py-2' >First Category Name</Label>
               <Input
                 placeholder="e.g., Third-Party APIs"
                 value={newCategoryName}
@@ -499,7 +605,7 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div>
-              <Label>Feature Name</Label>
+              <Label className='py-2'>Feature Name</Label>
               <Input
                 placeholder="e.g., Payment Gateway Integration"
                 value={newFeature.desc}
@@ -507,7 +613,7 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
               />
             </div>
             <div>
-              <Label>Description</Label>
+              <Label className='py-2'>Description</Label>
               <Textarea
                 placeholder="Detailed description of the feature"
                 value={newFeature.detail}
@@ -516,7 +622,7 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <Label>Hours</Label>
+                <Label className='py-2'>Hours</Label>
                 <Input
                   type="number"
                   value={newFeature.hours}
@@ -526,7 +632,7 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
                 />
               </div>
               <div>
-                <Label>Price ({invoice.metadata.currency})</Label>
+                <Label className='py-2'>Price ({invoice.metadata.currency})</Label>
                 <Input
                   type="number"
                   value={newFeature.price}
@@ -543,7 +649,7 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
                   setNewFeature({ ...newFeature, required: checked === true })
                 }
               />
-              <Label>Required feature</Label>
+              <Label className='py-2'>Required feature</Label>
             </div>
           </div>
           <DialogFooter>

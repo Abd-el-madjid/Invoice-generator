@@ -29,6 +29,19 @@ export interface Metadata {
   domain?: string;
   projectType?: string;
   complexity?: string;
+  // Company Details
+  companyName?: string;
+  companyEmail?: string;
+  companyPhone?: string;
+  companyAddress?: string;
+  // Client Details
+  clientEmail?: string;
+  clientPhone?: string;
+  clientAddress?: string;
+  // Signature
+  clientSignature?: string; // Base64 image data
+  companySignature?: string; // Base64 image data
+  signatureDate?: string;
 }
 
 export interface Totals {
