@@ -5,7 +5,6 @@ import { exportAsPrintableHTML, generateContractHTML, generateHTMLExport } from 
 import { ExportDialog } from '@/app/components/export-dialog';
 import { PDFInvoiceGenerator } from '@/app/components/export-pdf';
 
-import { useReactToPrint } from 'react-to-print';
 import { Card } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
 import { Input } from '@/app/components/ui/input';
@@ -184,9 +183,14 @@ export function ProjectEditor({ invoice, onInvoiceChange, onNewProject }: Projec
 
   // Print functionality
   const componentRef = useRef(null);
-  const handlePrint = useReactToPrint({
-    content: () => componentRef.current,
-  });
+  // Dynamically import react-to-print only in browser
+  const handlePrint = useMemo(() => {
+    if (typeof window === 'undefined') return () => {}; // SSR guard
+    const { useReactToPrint } = require('react-to-print');
+    return useReactToPrint({
+      content: () => componentRef.current,
+    });
+  }, []);
 
   return (
     <div className="grid lg:grid-cols-[1fr_350px] gap-6">
