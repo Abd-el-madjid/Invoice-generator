@@ -8,7 +8,7 @@ import { DocumentUploader } from '@/app/components/document-uploader';
 import { ProjectEditor } from '@/app/components/project-editor';
 import { Toaster } from '@/app/components/ui/sonner';
 import { FileText, Sparkles } from 'lucide-react';
-import {Logo} from '@app/assets/logo.webp';
+import Logo from '@/app/assets/logo.webp';
 
 type WorkflowMode = 'selection' | 'create' | 'rebuild' | 'editing';
 
@@ -47,18 +47,17 @@ export default function App() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="h-10 w-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-            <motion.button
-             onClick={handleBackToSelection}
-            className="flex items-center"
-            whileHover={{ scale: 1.02 }}
-          >
-            <img
-              src={Logo}
-              alt="Logo"
-              className="h-8 w-auto"
-            />
-          </motion.button>              </div>
+              <div className="h-10 w-10  rounded-lg flex items-center justify-center">
+           <motion.button
+  onClick={handleBackToSelection}
+  whileHover={{ scale: 1.1 }}
+  whileTap={{ scale: 0.95 }}
+  className="flex items-center"
+>
+  <img src={Logo} alt="Logo" className="h-10 w-auto" />
+</motion.button>
+
+              </div>
               <div>
                 <h1 className="font-bold text-slate-900">Smart Project Builder</h1>
                 <p className="text-xs text-slate-500">Invoice, Contract & Document Generator</p>
