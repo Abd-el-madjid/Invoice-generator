@@ -7,6 +7,8 @@ import { ProjectEditor } from '@/app/components/project-editor';
 import { Toaster } from '@/app/components/ui/sonner';
 import { FileText, Sparkles } from 'lucide-react';
 import Logo from '@/app/assets/logo.webp';
+import { SpeedInsights } from "@vercel/speed-insights/react";
+import { Analytics } from "@vercel/analytics/react";
 
 type WorkflowMode = 'selection' | 'create' | 'rebuild' | 'editing';
 
@@ -139,6 +141,10 @@ export default function App() {
 
       {/* Toast Notifications */}
       <Toaster />
+       {/* Vercel Analytics */}
+      <SpeedInsights  sampleRate={100} // send metrics for 100% of users
+  debug={false} />
+      <Analytics />
     </div>
   );
 }
