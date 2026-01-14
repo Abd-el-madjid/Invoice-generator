@@ -1,4 +1,6 @@
 import { useState } from 'react';
+import { motion } from 'motion/react';
+
 import { Invoice } from '@/types/project';
 import { WorkflowSelection } from '@/app/components/workflow-selection';
 import { ProjectCreator } from '@/app/components/project-creator';
@@ -6,6 +8,7 @@ import { DocumentUploader } from '@/app/components/document-uploader';
 import { ProjectEditor } from '@/app/components/project-editor';
 import { Toaster } from '@/app/components/ui/sonner';
 import { FileText, Sparkles } from 'lucide-react';
+import {Logo} from '@app/assets/logo.webp';
 
 type WorkflowMode = 'selection' | 'create' | 'rebuild' | 'editing';
 
@@ -45,8 +48,17 @@ export default function App() {
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-3">
               <div className="h-10 w-10 bg-gradient-to-br from-blue-600 to-indigo-600 rounded-lg flex items-center justify-center">
-                <Sparkles className="h-6 w-6 text-white" />
-              </div>
+            <motion.button
+             onClick={handleBackToSelection}
+            className="flex items-center"
+            whileHover={{ scale: 1.02 }}
+          >
+            <img
+              src={Logo}
+              alt="Logo"
+              className="h-8 w-auto"
+            />
+          </motion.button>              </div>
               <div>
                 <h1 className="font-bold text-slate-900">Smart Project Builder</h1>
                 <p className="text-xs text-slate-500">Invoice, Contract & Document Generator</p>
