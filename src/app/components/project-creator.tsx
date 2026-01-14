@@ -51,11 +51,11 @@ const COMPLEXITY_LEVELS: ComplexityLevel[] = [
 ];
 
 const CURRENCIES = [
+  
+  { code: 'DZD', symbol: 'د.ج', name: 'Algerian Dinar' },
   { code: 'USD', symbol: '$', name: 'US Dollar' },
   { code: 'EUR', symbol: '€', name: 'Euro' },
   { code: 'GBP', symbol: '£', name: 'British Pound' },
-  { code: 'DZD', symbol: 'د.ج', name: 'Algerian Dinar' },
-  { code: 'MAD', symbol: 'د.م.', name: 'Moroccan Dirham' },
 ];
 
 export function ProjectCreator({ onProjectCreated, onCancel }: ProjectCreatorProps) {
